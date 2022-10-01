@@ -58,7 +58,14 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Logs
+*.log
+
 # Cache Files
 PackageCache/
 ShaderCache/
 BurstCache/
+StateCache/
+
+# Artifacts
+Artifacts/
