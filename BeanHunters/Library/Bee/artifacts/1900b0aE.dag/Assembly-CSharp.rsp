@@ -372,6 +372,8 @@
 "Assets/Scripts/CameraController.cs"
 "Assets/Scripts/CooldownUI.cs"
 "Assets/Scripts/GenerateTiles.cs"
+"Assets/Scripts/InventoryManager.cs"
+"Assets/Scripts/Pickup.cs"
 "Assets/Scripts/PlayerController.cs"
 -langversion:9.0
 

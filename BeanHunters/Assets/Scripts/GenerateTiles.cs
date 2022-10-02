@@ -15,10 +15,6 @@ public class GenerateTiles : MonoBehaviour
     {
         map = GetComponent<Tilemap>();
         cam = FindObjectOfType<Camera>();
-        map.SetTile(new Vector3Int(0, 0, 0), tiles[0]);
-        map.SetTile(new Vector3Int(0, 1, 0), tiles[1]);
-        map.SetTile(new Vector3Int(1, 0, 0), tiles[2]);
-        map.SetTile(new Vector3Int(1, 1, 0), tiles[3]);
     }
 
     // Update is called once per frame
