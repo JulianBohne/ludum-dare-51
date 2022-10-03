@@ -7,6 +7,7 @@ public class GenerateTiles : MonoBehaviour
 {
     private Tilemap map;
     public Tile[] tiles;
+    public int seed = 0;
 
     private Camera cam;
     
@@ -50,6 +51,6 @@ public class GenerateTiles : MonoBehaviour
 
     private float rand(float x, float y)
     {
-        return Mathf.Abs((float)(Mathf.Sin((float)(x* 12.9898 + y*78.233)) * 43758.5453) % 1);
+        return Mathf.Abs((float)(Mathf.Sin((float)(x* 12.9898 + y*78.233 + seed)) * 43758.5453) % 1);
     }
 }

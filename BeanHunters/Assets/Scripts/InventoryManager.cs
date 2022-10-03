@@ -17,7 +17,6 @@ public class InventoryManager : MonoBehaviour
         if (counts.TryGetValue(name, out int currentValue))
         {
             counts[name] = currentValue + count;
-            Debug.Log(counts[name]);
             refreshUI(name);
         }
     }

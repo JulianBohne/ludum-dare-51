@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class PlayerController : MonoBehaviour
     public float grappleStrength;
     public CooldownUI grappleCooldown;
     public CooldownUI boostCooldown;
+    public TextMeshProUGUI enterShelterText;
 
     public float boostTime;
     public float boostStrength;
@@ -43,6 +45,18 @@ public class PlayerController : MonoBehaviour
     private Transform shadowTransform;
     private SpriteRenderer shadowRenderer;
 
+    private ShelterManager sm;
+
+    private JetpackShake packShake;
+    private CameraShake camShake;
+    enum State
+    {
+        SHELTER,
+        OUTSIDE
+    }
+
+    private State currentState = State.OUTSIDE;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -58,10 +72,28 @@ public class PlayerController : MonoBehaviour
 
         shadowTransform = transform.Find("ShadowSprite");
         shadowRenderer = shadowTransform.GetComponent<SpriteRenderer>();
+
+        sm = FindObjectOfType<ShelterManager>();
+
+        packShake = FindObjectOfType<JetpackShake>();
+        camShake = FindObjectOfType<CameraShake>();
     }
 
     // Update is called once per frame
     void Update()
+    {
+        switch (currentState)
+        {
+            case State.OUTSIDE:
+                updateOutside();
+                break;
+            case State.SHELTER:
+                updateShelter();
+                break;
+        }
+    }
+
+    void updateOutside()
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -79,10 +111,11 @@ public class PlayerController : MonoBehaviour
                 {
                     lr.positionCount = 2;
                     Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    worldPosition.z = 0.1f;
+                    worldPosition.z = -1f;
                     attPoint = worldPosition;
                     attached = true;
 
+                    StartCoroutine(camShake.Shake(0.1f, 0.1f));
                     audioPlayer.play("Hit");
                 }
             }
@@ -93,8 +126,16 @@ public class PlayerController : MonoBehaviour
             if (boostCooldown.tryToUse())
             {
                 audioPlayer.play("JetpackStart");
+                StartCoroutine(camShake.Shake(boostTime, 0.1f));
                 boostTimeLeft = boostTime;
             }
+        }
+
+        if (boostTimeLeft > 0)
+        {
+            boostTimeLeft -= Time.deltaTime;
+            inputDir = rb.velocity.normalized;
+            rb.AddForce(inputDir * boostStrength);
         }
 
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
@@ -122,11 +163,7 @@ public class PlayerController : MonoBehaviour
 
         rb.AddForce(input * jetpackForce);
 
-        if(boostTimeLeft > 0)
-        {
-            boostTimeLeft -= Time.deltaTime;
-            rb.AddForce(rb.velocity.normalized * boostStrength);
-        }
+        
 
         rb.velocity = Vector2.ClampMagnitude(rb.velocity, maxSpeed);
 
@@ -140,11 +177,24 @@ public class PlayerController : MonoBehaviour
 
         float bobValue = Mathf.Sin(Time.unscaledTime * bobSpeed);
         spriteTransform.localPosition = new Vector3(0, bobValue * bobHeight, 0);
-        shadowRenderer.color = new Color32(0, 0, 0, (byte)(50-(bobValue + 1)*10));
+        shadowRenderer.color = new Color32(0, 0, 0, (byte)(50 - (bobValue + 1) * 10));
 
-        #pragma warning disable CS0618 // Type or member is obsolete
+#pragma warning disable CS0618 // Type or member is obsolete
         dust.emissionRate = Mathf.Clamp((float)(rb.velocity.magnitude - 7) * dustAmount, 0, float.MaxValue);
-        #pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        if (sm.isOverShelter(transform.position))
+        {
+            enterShelterText.enabled = true;
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                enterShelter();
+            }
+        }
+        else
+        {
+            enterShelterText.enabled = false;
+        }
 
         if (attached)
         {
@@ -153,5 +203,67 @@ public class PlayerController : MonoBehaviour
 
             rb.AddForce((attPoint - shadowTransform.position) * grappleStrength);
         }
+    }
+
+    void updateShelter()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            exitShelter();
+        }
+    }
+
+    void enterShelter()
+    {
+        Vector3 shelterEntry = sm.closestShelter(transform.position) + Vector3.down * 0.5f;
+        shelterEntry.z = transform.position.z;
+        transform.position = shelterEntry;
+        rb.velocity = Vector2.zero;
+
+        lr.positionCount = 0;
+        attached = false;
+
+        disable();
+
+        enterShelterText.SetText("Press 'E' to exit shelter");
+
+        currentState = State.SHELTER;
+    }
+
+    void exitShelter()
+    {
+        enable();
+
+        enterShelterText.SetText("Press 'E' to enter shelter");
+
+        currentState = State.OUTSIDE;
+    }
+
+    private void disable()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            transform.GetChild(i).gameObject.SetActive(false);
+        }
+
+        audioPlayer.stop("Jetpack");
+
+        GetComponent<CapsuleCollider2D>().enabled = false;
+        lr.enabled = false;
+
+        rb.isKinematic = true;
+    }
+
+    private void enable()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            transform.GetChild(i).gameObject.SetActive(true);
+        }
+
+        GetComponent<CapsuleCollider2D>().enabled = true;
+        lr.enabled = true;
+
+        rb.isKinematic = false;
     }
 }

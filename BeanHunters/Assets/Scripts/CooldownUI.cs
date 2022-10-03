@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class CooldownUI : MonoBehaviour
 {
-    private Image testImage;
+    private Image actionImage;
 
     public float cooldownTime;
     private float timeLeft;
@@ -22,7 +22,8 @@ public class CooldownUI : MonoBehaviour
         else if(enabledCooldown)
         {
             isCooldown = true;
-            testImage.color = new Color32(255, 0, 0, 255);
+            actionImage.color = new Color32(255, 0, 0, 127);
+            actionImage.transform.localScale = new Vector3(1,1,1);
             timeLeft = cooldownTime;
         }
         return true;
@@ -51,8 +52,8 @@ public class CooldownUI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        testImage = GetComponent<Image>();
-        testImage.color = new Color32(0, 255, 0, 255);
+        actionImage = transform.Find("Overlay").GetComponent<Image>();
+        actionImage.color = new Color32(0, 0, 0, 0);
     }
 
     // Update is called once per frame
@@ -64,8 +65,9 @@ public class CooldownUI : MonoBehaviour
             if(timeLeft < 0)
             {
                 isCooldown = false;
-                testImage.color = new Color32(0, 255, 0, 255);
+                actionImage.color = new Color32(0, 0, 0, 0);
             }
+            actionImage.transform.localScale = new Vector3(1, timeLeft/cooldownTime, 1);
         }
     }
 
