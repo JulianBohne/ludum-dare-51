@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -47,15 +48,22 @@ public class PlayerController : MonoBehaviour
 
     private ShelterManager sm;
 
-    private JetpackShake packShake;
     private CameraShake camShake;
-    enum State
+
+
+    private bool pausedGame = false;
+    public TextMeshProUGUI pausedLabel;
+
+    public TextMeshProUGUI enterPodText;
+
+    public enum State
     {
         SHELTER,
         OUTSIDE
     }
 
-    private State currentState = State.OUTSIDE;
+    [HideInInspector]
+    public State currentState = State.OUTSIDE;
 
     // Start is called before the first frame update
     void Start()
@@ -75,13 +83,21 @@ public class PlayerController : MonoBehaviour
 
         sm = FindObjectOfType<ShelterManager>();
 
-        packShake = FindObjectOfType<JetpackShake>();
         camShake = FindObjectOfType<CameraShake>();
+
+        pausedLabel.enabled = false;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            pausedGame = !pausedGame;
+            pausedLabel.enabled = pausedGame;
+            audioPlayer.play("Pause");
+            Time.timeScale = pausedGame ? 0.0f : 1.0f;
+        }
         switch (currentState)
         {
             case State.OUTSIDE:
@@ -175,13 +191,21 @@ public class PlayerController : MonoBehaviour
             spriteRenderer.sprite = up;
         else spriteRenderer.sprite = down;
 
-        float bobValue = Mathf.Sin(Time.unscaledTime * bobSpeed);
+        float bobValue = Mathf.Sin(Time.time * bobSpeed);
         spriteTransform.localPosition = new Vector3(0, bobValue * bobHeight, 0);
         shadowRenderer.color = new Color32(0, 0, 0, (byte)(50 - (bobValue + 1) * 10));
 
 #pragma warning disable CS0618 // Type or member is obsolete
         dust.emissionRate = Mathf.Clamp((float)(rb.velocity.magnitude - 7) * dustAmount, 0, float.MaxValue);
 #pragma warning restore CS0618 // Type or member is obsolete
+
+        if (enterPodText.enabled)
+        {
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                SceneManager.LoadScene("PodScene");
+            }
+        }
 
         if (sm.isOverShelter(transform.position))
         {
@@ -202,6 +226,22 @@ public class PlayerController : MonoBehaviour
             lr.SetPosition(1, (Vector3)attPoint);
 
             rb.AddForce((attPoint - shadowTransform.position) * grappleStrength);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Pod")
+        {
+            enterPodText.enabled = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Pod")
+        {
+            enterPodText.enabled = false;
         }
     }
 

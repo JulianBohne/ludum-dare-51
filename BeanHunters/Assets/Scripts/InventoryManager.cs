@@ -5,18 +5,42 @@ using TMPro;
 
 public class InventoryManager : MonoBehaviour
 {
-    private Dictionary<string, int> counts = new Dictionary<string, int> {
+    private static Dictionary<string, int> counts = new Dictionary<string, int> {
         {"Components", 0 },
         {"Fuel", 0 },
         {"Ration", 0 },
         {"Scrap", 0 }
     };
 
+    public static void resetInventory()
+    {
+        counts = new Dictionary<string, int> {
+            {"Components", 0 },
+            {"Fuel", 0 },
+            {"Ration", 0 },
+            {"Scrap", 0 }
+        };
+    }
+
     public void addItem(string name, int count)
     {
         if (counts.TryGetValue(name, out int currentValue))
         {
             counts[name] = currentValue + count;
+            refreshUI(name);
+        }
+    }
+
+    public int getCount(string name)
+    {
+        return counts[name];
+    }
+
+    public void removeItem(string name, int count)
+    {
+        if (counts.TryGetValue(name, out int currentValue))
+        {
+            counts[name] = currentValue - count;
             refreshUI(name);
         }
     }
